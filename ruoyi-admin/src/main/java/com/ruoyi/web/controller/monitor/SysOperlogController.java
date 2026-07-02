@@ -17,8 +17,11 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.SysOperLog;
+import com.ruoyi.system.domain.query.SysOperLogQuery;
+import com.ruoyi.system.domain.vo.SysOperLogVO;
 import com.ruoyi.system.service.ISysOperLogService;
 
 /**
@@ -37,11 +40,13 @@ public class SysOperlogController extends BaseController
     @PreAuthorize("@ss.hasPermi('monitor:operlog:list')")
     @Operation(summary = "获取操作日志列表")
     @GetMapping("/list")
-    public TableDataInfo list(SysOperLog operLog)
+    public TableDataInfo list(SysOperLogQuery query)
     {
         startPage();
+        SysOperLog operLog = BeanConvertUtils.convert(query, SysOperLog.class);
         List<SysOperLog> list = operLogService.selectOperLogList(operLog);
-        return getDataTable(list);
+        List<SysOperLogVO> voList = BeanConvertUtils.convertList(list, SysOperLogVO.class);
+        return getDataTable(voList);
     }
 
     @Log(title = "操作日志", businessType = BusinessType.EXPORT)

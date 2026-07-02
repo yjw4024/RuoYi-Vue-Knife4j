@@ -21,7 +21,11 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.system.domain.SysNotice;
+import com.ruoyi.system.domain.dto.SysNoticeDTO;
+import com.ruoyi.system.domain.query.SysNoticeQuery;
+import com.ruoyi.system.domain.vo.SysNoticeVO;
 import com.ruoyi.system.service.ISysNoticeReadService;
 import com.ruoyi.system.service.ISysNoticeService;
 
@@ -54,6 +58,18 @@ public class SysNoticeController extends BaseController
         return getDataTable(list);
     }
 
+    @Operation(summary = "获取通知公告列表")
+    @PreAuthorize("@ss.hasPermi('system:notice:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(SysNoticeQuery query)
+    {
+        startPage();
+        SysNotice notice = BeanConvertUtils.convert(query, SysNotice.class);
+        List<SysNotice> list = noticeService.selectNoticeList(notice);
+        List<SysNoticeVO> voList = BeanConvertUtils.convertList(list, SysNoticeVO.class);
+        return getDataTable(voList);
+    }
+
     /**
      * 根据通知公告编号获取详细信息
      */
@@ -61,7 +77,9 @@ public class SysNoticeController extends BaseController
     @GetMapping(value = "/{noticeId}")
     public AjaxResult getInfo(@PathVariable Long noticeId)
     {
-        return success(noticeService.selectNoticeById(noticeId));
+        SysNotice notice = noticeService.selectNoticeById(noticeId);
+        SysNoticeVO vo = BeanConvertUtils.convert(notice, SysNoticeVO.class);
+        return success().put("data", vo);
     }
 
     /**
@@ -77,6 +95,17 @@ public class SysNoticeController extends BaseController
         return toAjax(noticeService.insertNotice(notice));
     }
 
+    @Operation(summary = "新增通知公告")
+    @PreAuthorize("@ss.hasPermi('system:notice:add')")
+    @Log(title = "通知公告", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody SysNoticeDTO dto)
+    {
+        SysNotice notice = BeanConvertUtils.convert(dto, SysNotice.class);
+        notice.setCreateBy(getUsername());
+        return toAjax(noticeService.insertNotice(notice));
+    }
+
     /**
      * 修改通知公告
      */
@@ -86,6 +115,17 @@ public class SysNoticeController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysNotice notice)
     {
+        notice.setUpdateBy(getUsername());
+        return toAjax(noticeService.updateNotice(notice));
+    }
+
+    @Operation(summary = "修改通知公告")
+    @PreAuthorize("@ss.hasPermi('system:notice:edit')")
+    @Log(title = "通知公告", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody SysNoticeDTO dto)
+    {
+        SysNotice notice = BeanConvertUtils.convert(dto, SysNotice.class);
         notice.setUpdateBy(getUsername());
         return toAjax(noticeService.updateNotice(notice));
     }

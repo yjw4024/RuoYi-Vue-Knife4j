@@ -15,8 +15,11 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.quartz.domain.SysJobLog;
+import com.ruoyi.quartz.domain.query.SysJobLogQuery;
+import com.ruoyi.quartz.domain.vo.SysJobLogVO;
 import com.ruoyi.quartz.service.ISysJobLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,11 +43,13 @@ public class SysJobLogController extends BaseController
     @PreAuthorize("@ss.hasPermi('monitor:job:list')")
     @Operation(tags = {"定时任务日志管理"}, summary ="获取定时任务日志列表")
     @GetMapping("/list")
-    public TableDataInfo list(SysJobLog sysJobLog)
+    public TableDataInfo list(SysJobLogQuery query)
     {
         startPage();
+        SysJobLog sysJobLog = BeanConvertUtils.convert(query, SysJobLog.class);
         List<SysJobLog> list = jobLogService.selectJobLogList(sysJobLog);
-        return getDataTable(list);
+        List<SysJobLogVO> voList = BeanConvertUtils.convertList(list, SysJobLogVO.class);
+        return getDataTable(voList);
     }
 
     /**
@@ -69,7 +74,9 @@ public class SysJobLogController extends BaseController
     @GetMapping(value = "/{jobLogId}")
     public AjaxResult getInfo(@PathVariable Long jobLogId)
     {
-        return success(jobLogService.selectJobLogById(jobLogId));
+        SysJobLog jobLog = jobLogService.selectJobLogById(jobLogId);
+        SysJobLogVO vo = BeanConvertUtils.convert(jobLog, SysJobLogVO.class);
+        return success(vo);
     }
 
 

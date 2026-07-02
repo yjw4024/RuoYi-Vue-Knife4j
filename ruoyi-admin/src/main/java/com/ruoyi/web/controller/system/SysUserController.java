@@ -28,7 +28,11 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.system.domain.dto.SysUserDTO;
+import com.ruoyi.system.domain.query.SysUserQuery;
+import com.ruoyi.system.domain.vo.SysUserVO;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysPostService;
 import com.ruoyi.system.service.ISysRoleService;
@@ -62,10 +66,10 @@ public class SysUserController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:user:list')")
     @Operation(summary = "获取用户列表")
     @GetMapping("/list")
-    public TableDataInfo list(SysUser user)
+    public TableDataInfo list(SysUserQuery query)
     {
         startPage();
-        List<SysUser> list = userService.selectUserList(user);
+        List<SysUserVO> list = userService.selectUserVOList(query);
         return getDataTable(list);
     }
 
@@ -113,10 +117,10 @@ public class SysUserController extends BaseController
         if (StringUtils.isNotNull(userId))
         {
             userService.checkUserDataScope(userId);
-            SysUser sysUser = userService.selectUserById(userId);
-            ajax.put(AjaxResult.DATA_TAG, sysUser);
+            SysUserVO sysUserVO = userService.selectUserVOById(userId);
+            ajax.put(AjaxResult.DATA_TAG, sysUserVO);
             ajax.put("postIds", postService.selectPostListByUserId(userId));
-            ajax.put("roleIds", sysUser.getRoles().stream().map(SysRole::getRoleId).collect(Collectors.toList()));
+            ajax.put("roleIds", sysUserVO.getRoles().stream().map(SysRole::getRoleId).collect(Collectors.toList()));
         }
         List<SysRole> roles = roleService.selectRoleAll();
         ajax.put("roles", SecurityUtils.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
@@ -131,10 +135,11 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.INSERT)
     @Operation(summary = "新增用户")
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysUser user)
+    public AjaxResult add(@Validated @RequestBody SysUserDTO dto)
     {
-        deptService.checkDeptDataScope(user.getDeptId());
-        roleService.checkRoleDataScope(user.getRoleIds());
+        deptService.checkDeptDataScope(dto.getDeptId());
+        roleService.checkRoleDataScope(dto.getRoleIds());
+        SysUser user = BeanConvertUtils.convert(dto, SysUser.class);
         if (!userService.checkUserNameUnique(user))
         {
             return error("新增用户'" + user.getUserName() + "'失败，登录账号已存在");
@@ -148,7 +153,7 @@ public class SysUserController extends BaseController
             return error("新增用户'" + user.getUserName() + "'失败，邮箱账号已存在");
         }
         user.setCreateBy(getUsername());
-        user.setPassword(SecurityUtils.encryptPassword(user.getPassword()));
+        user.setPassword(SecurityUtils.encryptPassword(dto.getPassword()));
         return toAjax(userService.insertUser(user));
     }
 
@@ -159,12 +164,13 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @Operation(summary = "修改用户")
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysUser user)
+    public AjaxResult edit(@Validated @RequestBody SysUserDTO dto)
     {
+        SysUser user = BeanConvertUtils.convert(dto, SysUser.class);
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
-        deptService.checkDeptDataScope(user.getDeptId());
-        roleService.checkRoleDataScope(user.getRoleIds());
+        deptService.checkDeptDataScope(dto.getDeptId());
+        roleService.checkRoleDataScope(dto.getRoleIds());
         if (!userService.checkUserNameUnique(user))
         {
             return error("修改用户'" + user.getUserName() + "'失败，登录账号已存在");
@@ -204,11 +210,12 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @Operation(summary = "重置用户密码")
     @PutMapping("/resetPwd")
-    public AjaxResult resetPwd(@RequestBody SysUser user)
+    public AjaxResult resetPwd(@RequestBody SysUserDTO dto)
     {
+        SysUser user = BeanConvertUtils.convert(dto, SysUser.class);
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
-        user.setPassword(SecurityUtils.encryptPassword(user.getPassword()));
+        user.setPassword(SecurityUtils.encryptPassword(dto.getPassword()));
         user.setUpdateBy(getUsername());
         return toAjax(userService.resetPwd(user));
     }
@@ -220,8 +227,9 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @Operation(summary = "修改用户状态")
     @PutMapping("/changeStatus")
-    public AjaxResult changeStatus(@RequestBody SysUser user)
+    public AjaxResult changeStatus(@RequestBody SysUserDTO dto)
     {
+        SysUser user = BeanConvertUtils.convert(dto, SysUser.class);
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
         user.setUpdateBy(getUsername());

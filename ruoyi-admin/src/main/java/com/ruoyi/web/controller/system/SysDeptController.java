@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.Valid;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +23,10 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.dto.SysDeptDTO;
+import com.ruoyi.system.domain.vo.SysDeptVO;
 import com.ruoyi.system.service.ISysDeptService;
 
 /**
@@ -47,7 +51,7 @@ public class SysDeptController extends BaseController
     public AjaxResult list(SysDept dept)
     {
         List<SysDept> depts = deptService.selectDeptList(dept);
-        return success(depts);
+        return success(BeanConvertUtils.convertList(depts, SysDeptVO.class));
     }
 
     /**
@@ -72,7 +76,7 @@ public class SysDeptController extends BaseController
     public AjaxResult getInfo(@PathVariable Long deptId)
     {
         deptService.checkDeptDataScope(deptId);
-        return success(deptService.selectDeptById(deptId));
+        return success(deptService.selectDeptVOById(deptId));
     }
 
     /**
@@ -82,8 +86,9 @@ public class SysDeptController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:dept:add')")
     @Log(title = "部门管理", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysDept dept)
+    public AjaxResult add(@Valid @RequestBody SysDeptDTO dto)
     {
+        SysDept dept = BeanConvertUtils.convert(dto, SysDept.class);
         if (!deptService.checkDeptNameUnique(dept))
         {
             return error("新增部门'" + dept.getDeptName() + "'失败，部门名称已存在");
@@ -99,8 +104,9 @@ public class SysDeptController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:dept:edit')")
     @Log(title = "部门管理", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysDept dept)
+    public AjaxResult edit(@Valid @RequestBody SysDeptDTO dto)
     {
+        SysDept dept = BeanConvertUtils.convert(dto, SysDept.class);
         Long deptId = dept.getDeptId();
         deptService.checkDeptDataScope(deptId);
         if (!deptService.checkDeptNameUnique(dept))

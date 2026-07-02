@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.SysCache;
+import com.ruoyi.system.domain.vo.SysCacheVO;
 
 /**
  * 缓存监控
@@ -98,7 +100,8 @@ public class CacheController
     {
         String cacheValue = redisTemplate.opsForValue().get(cacheKey);
         SysCache sysCache = new SysCache(cacheName, cacheKey, cacheValue);
-        return AjaxResult.success(sysCache);
+        SysCacheVO vo = BeanConvertUtils.convert(sysCache, SysCacheVO.class);
+        return AjaxResult.success(vo);
     }
 
     @PreAuthorize("@ss.hasPermi('monitor:cache:list')")

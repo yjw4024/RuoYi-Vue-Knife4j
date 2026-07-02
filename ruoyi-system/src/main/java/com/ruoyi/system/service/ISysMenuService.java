@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Set;
 import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysMenu;
+import com.ruoyi.system.domain.dto.SysMenuDTO;
+import com.ruoyi.system.domain.query.SysMenuQuery;
 import com.ruoyi.system.domain.vo.RouterVo;
+import com.ruoyi.system.domain.vo.SysMenuVO;
 
 /**
  * 菜单 业务层
@@ -157,4 +160,36 @@ public interface ISysMenuService
      * @return 结果
      */
     public boolean checkRouteConfigUnique(SysMenu menu);
+
+    /**
+     * 根据菜单ID查询信息（VO）
+     *
+     * @param menuId 菜单ID
+     * @return 菜单VO
+     */
+    public SysMenuVO selectMenuVOById(Long menuId);
+
+    /**
+     * 根据条件查询菜单列表（VO）
+     *
+     * @param query 菜单查询条件
+     * @return 菜单VO列表
+     */
+    public List<SysMenuVO> selectMenuVOList(SysMenuQuery query);
+
+    /**
+     * 新增菜单（DTO）
+     *
+     * @param dto 菜单DTO
+     * @return 结果
+     */
+    public int insertMenuByDTO(SysMenuDTO dto);
+
+    /**
+     * 修改菜单（DTO）
+     *
+     * @param dto 菜单DTO
+     * @return 结果
+     */
+    public int updateMenuByDTO(SysMenuDTO dto);
 }

@@ -12,12 +12,16 @@ import com.ruoyi.common.annotation.DataScope;
 import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.system.domain.SysRoleDept;
 import com.ruoyi.system.domain.SysRoleMenu;
 import com.ruoyi.system.domain.SysUserRole;
+import com.ruoyi.system.domain.dto.SysRoleDTO;
+import com.ruoyi.system.domain.query.SysRoleQuery;
+import com.ruoyi.system.domain.vo.SysRoleVO;
 import com.ruoyi.system.mapper.SysRoleDeptMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.mapper.SysRoleMenuMapper;
@@ -422,5 +426,60 @@ public class SysRoleServiceImpl implements ISysRoleService
             list.add(ur);
         }
         return userRoleMapper.batchUserRole(list);
+    }
+
+    /**
+     * 通过角色ID查询角色（VO）
+     *
+     * @param roleId 角色ID
+     * @return 角色VO对象
+     */
+    @Override
+    public SysRoleVO selectRoleVOById(Long roleId)
+    {
+        SysRole role = selectRoleById(roleId);
+        return BeanConvertUtils.convert(role, SysRoleVO.class);
+    }
+
+    /**
+     * 根据条件查询角色列表（VO）
+     *
+     * @param query 角色查询条件
+     * @return 角色VO列表
+     */
+    @Override
+    public List<SysRoleVO> selectRoleVOList(SysRoleQuery query)
+    {
+        SysRole role = BeanConvertUtils.convert(query, SysRole.class);
+        List<SysRole> list = selectRoleList(role);
+        return BeanConvertUtils.convertList(list, SysRoleVO.class);
+    }
+
+    /**
+     * 新增角色（DTO）
+     *
+     * @param dto 角色DTO
+     * @return 结果
+     */
+    @Override
+    @Transactional
+    public int insertRoleByDTO(SysRoleDTO dto)
+    {
+        SysRole role = BeanConvertUtils.convert(dto, SysRole.class);
+        return insertRole(role);
+    }
+
+    /**
+     * 修改角色（DTO）
+     *
+     * @param dto 角色DTO
+     * @return 结果
+     */
+    @Override
+    @Transactional
+    public int updateRoleByDTO(SysRoleDTO dto)
+    {
+        SysRole role = BeanConvertUtils.convert(dto, SysRole.class);
+        return updateRole(role);
     }
 }

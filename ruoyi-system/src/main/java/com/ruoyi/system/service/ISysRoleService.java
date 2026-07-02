@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Set;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.system.domain.SysUserRole;
+import com.ruoyi.system.domain.dto.SysRoleDTO;
+import com.ruoyi.system.domain.query.SysRoleQuery;
+import com.ruoyi.system.domain.vo.SysRoleVO;
 
 /**
  * 角色业务层
@@ -170,4 +173,36 @@ public interface ISysRoleService
      * @return 结果
      */
     public int insertAuthUsers(Long roleId, Long[] userIds);
+
+    /**
+     * 通过角色ID查询角色（VO）
+     *
+     * @param roleId 角色ID
+     * @return 角色VO对象
+     */
+    public SysRoleVO selectRoleVOById(Long roleId);
+
+    /**
+     * 根据条件查询角色列表（VO）
+     *
+     * @param query 角色查询条件
+     * @return 角色VO列表
+     */
+    public List<SysRoleVO> selectRoleVOList(SysRoleQuery query);
+
+    /**
+     * 新增角色（DTO）
+     *
+     * @param dto 角色DTO
+     * @return 结果
+     */
+    public int insertRoleByDTO(SysRoleDTO dto);
+
+    /**
+     * 修改角色（DTO）
+     *
+     * @param dto 角色DTO
+     * @return 结果
+     */
+    public int updateRoleByDTO(SysRoleDTO dto);
 }

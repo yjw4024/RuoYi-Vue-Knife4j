@@ -24,6 +24,10 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.utils.BeanConvertUtils;
+import com.ruoyi.system.domain.dto.SysDictDataDTO;
+import com.ruoyi.system.domain.query.SysDictDataQuery;
+import com.ruoyi.system.domain.vo.SysDictDataVO;
 import com.ruoyi.system.service.ISysDictDataService;
 import com.ruoyi.system.service.ISysDictTypeService;
 
@@ -53,6 +57,18 @@ public class SysDictDataController extends BaseController
         return getDataTable(list);
     }
 
+    @Operation(summary = "获取字典数据列表")
+    @PreAuthorize("@ss.hasPermi('system:dict:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(SysDictDataQuery query)
+    {
+        startPage();
+        SysDictData dictData = BeanConvertUtils.convert(query, SysDictData.class);
+        List<SysDictData> list = dictDataService.selectDictDataList(dictData);
+        List<SysDictDataVO> voList = BeanConvertUtils.convertList(list, SysDictDataVO.class);
+        return getDataTable(voList);
+    }
+
     @Operation(summary = "导出字典数据")
     @Log(title = "字典数据", businessType = BusinessType.EXPORT)
     @PreAuthorize("@ss.hasPermi('system:dict:export')")
@@ -72,7 +88,9 @@ public class SysDictDataController extends BaseController
     @GetMapping(value = "/{dictCode}")
     public AjaxResult getInfo(@PathVariable Long dictCode)
     {
-        return success(dictDataService.selectDictDataById(dictCode));
+        SysDictData dictData = dictDataService.selectDictDataById(dictCode);
+        SysDictDataVO vo = BeanConvertUtils.convert(dictData, SysDictDataVO.class);
+        return success().put("data", vo);
     }
 
     /**
@@ -103,6 +121,17 @@ public class SysDictDataController extends BaseController
         return toAjax(dictDataService.insertDictData(dict));
     }
 
+    @Operation(summary = "新增字典数据")
+    @PreAuthorize("@ss.hasPermi('system:dict:add')")
+    @Log(title = "字典数据", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody SysDictDataDTO dto)
+    {
+        SysDictData dict = BeanConvertUtils.convert(dto, SysDictData.class);
+        dict.setCreateBy(getUsername());
+        return toAjax(dictDataService.insertDictData(dict));
+    }
+
     /**
      * 修改保存字典类型
      */
@@ -112,6 +141,17 @@ public class SysDictDataController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysDictData dict)
     {
+        dict.setUpdateBy(getUsername());
+        return toAjax(dictDataService.updateDictData(dict));
+    }
+
+    @Operation(summary = "修改字典数据")
+    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
+    @Log(title = "字典数据", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody SysDictDataDTO dto)
+    {
+        SysDictData dict = BeanConvertUtils.convert(dto, SysDictData.class);
         dict.setUpdateBy(getUsername());
         return toAjax(dictDataService.updateDictData(dict));
     }

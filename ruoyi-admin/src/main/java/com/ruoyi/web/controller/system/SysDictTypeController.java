@@ -22,6 +22,10 @@ import com.ruoyi.common.core.domain.entity.SysDictType;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.utils.BeanConvertUtils;
+import com.ruoyi.system.domain.dto.SysDictTypeDTO;
+import com.ruoyi.system.domain.query.SysDictTypeQuery;
+import com.ruoyi.system.domain.vo.SysDictTypeVO;
 import com.ruoyi.system.service.ISysDictTypeService;
 
 /**
@@ -47,6 +51,18 @@ public class SysDictTypeController extends BaseController
         return getDataTable(list);
     }
 
+    @Operation(summary = "获取字典类型列表")
+    @PreAuthorize("@ss.hasPermi('system:dict:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(SysDictTypeQuery query)
+    {
+        startPage();
+        SysDictType dictType = BeanConvertUtils.convert(query, SysDictType.class);
+        List<SysDictType> list = dictTypeService.selectDictTypeList(dictType);
+        List<SysDictTypeVO> voList = BeanConvertUtils.convertList(list, SysDictTypeVO.class);
+        return getDataTable(voList);
+    }
+
     @Operation(summary = "导出字典类型数据")
     @Log(title = "字典类型", businessType = BusinessType.EXPORT)
     @PreAuthorize("@ss.hasPermi('system:dict:export')")
@@ -66,7 +82,9 @@ public class SysDictTypeController extends BaseController
     @GetMapping(value = "/{dictId}")
     public AjaxResult getInfo(@PathVariable Long dictId)
     {
-        return success(dictTypeService.selectDictTypeById(dictId));
+        SysDictType dictType = dictTypeService.selectDictTypeById(dictId);
+        SysDictTypeVO vo = BeanConvertUtils.convert(dictType, SysDictTypeVO.class);
+        return success().put("data", vo);
     }
 
     /**
@@ -86,6 +104,21 @@ public class SysDictTypeController extends BaseController
         return toAjax(dictTypeService.insertDictType(dict));
     }
 
+    @Operation(summary = "新增字典类型")
+    @PreAuthorize("@ss.hasPermi('system:dict:add')")
+    @Log(title = "字典类型", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody SysDictTypeDTO dto)
+    {
+        SysDictType dict = BeanConvertUtils.convert(dto, SysDictType.class);
+        if (!dictTypeService.checkDictTypeUnique(dict))
+        {
+            return error("新增字典'" + dict.getDictName() + "'失败，字典类型已存在");
+        }
+        dict.setCreateBy(getUsername());
+        return toAjax(dictTypeService.insertDictType(dict));
+    }
+
     /**
      * 修改字典类型
      */
@@ -95,6 +128,21 @@ public class SysDictTypeController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysDictType dict)
     {
+        if (!dictTypeService.checkDictTypeUnique(dict))
+        {
+            return error("修改字典'" + dict.getDictName() + "'失败，字典类型已存在");
+        }
+        dict.setUpdateBy(getUsername());
+        return toAjax(dictTypeService.updateDictType(dict));
+    }
+
+    @Operation(summary = "修改字典类型")
+    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
+    @Log(title = "字典类型", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody SysDictTypeDTO dto)
+    {
+        SysDictType dict = BeanConvertUtils.convert(dto, SysDictType.class);
         if (!dictTypeService.checkDictTypeUnique(dict))
         {
             return error("修改字典'" + dict.getDictName() + "'失败，字典类型已存在");

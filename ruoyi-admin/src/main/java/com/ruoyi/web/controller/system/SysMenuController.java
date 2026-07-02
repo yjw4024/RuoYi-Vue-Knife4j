@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +22,10 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.dto.SysMenuDTO;
+import com.ruoyi.system.domain.vo.SysMenuVO;
 import com.ruoyi.system.service.ISysMenuService;
 
 /**
@@ -46,7 +50,7 @@ public class SysMenuController extends BaseController
     public AjaxResult list(SysMenu menu)
     {
         List<SysMenu> menus = menuService.selectMenuList(menu, getUserId());
-        return success(menus);
+        return success(BeanConvertUtils.convertList(menus, SysMenuVO.class));
     }
 
     /**
@@ -57,7 +61,7 @@ public class SysMenuController extends BaseController
     @GetMapping(value = "/{menuId}")
     public AjaxResult getInfo(@PathVariable Long menuId)
     {
-        return success(menuService.selectMenuById(menuId));
+        return success(menuService.selectMenuVOById(menuId));
     }
 
     /**
@@ -92,8 +96,9 @@ public class SysMenuController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:menu:add')")
     @Log(title = "菜单管理", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysMenu menu)
+    public AjaxResult add(@Valid @RequestBody SysMenuDTO dto)
     {
+        SysMenu menu = BeanConvertUtils.convert(dto, SysMenu.class);
         if (!menuService.checkMenuNameUnique(menu))
         {
             return error("新增菜单'" + menu.getMenuName() + "'失败，菜单名称已存在");
@@ -117,8 +122,9 @@ public class SysMenuController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:menu:edit')")
     @Log(title = "菜单管理", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysMenu menu)
+    public AjaxResult edit(@Valid @RequestBody SysMenuDTO dto)
     {
+        SysMenu menu = BeanConvertUtils.convert(dto, SysMenu.class);
         if (!menuService.checkMenuNameUnique(menu))
         {
             return error("修改菜单'" + menu.getMenuName() + "'失败，菜单名称已存在");

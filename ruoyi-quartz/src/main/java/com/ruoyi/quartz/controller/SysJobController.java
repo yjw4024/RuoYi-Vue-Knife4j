@@ -2,6 +2,7 @@ package com.ruoyi.quartz.controller;
 
 import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,9 +21,13 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.exception.job.TaskException;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.quartz.domain.SysJob;
+import com.ruoyi.quartz.domain.dto.SysJobDTO;
+import com.ruoyi.quartz.domain.query.SysJobQuery;
+import com.ruoyi.quartz.domain.vo.SysJobVO;
 import com.ruoyi.quartz.service.ISysJobService;
 import com.ruoyi.quartz.util.CronUtils;
 import com.ruoyi.quartz.util.ScheduleUtils;
@@ -48,11 +53,13 @@ public class SysJobController extends BaseController
     @PreAuthorize("@ss.hasPermi('monitor:job:list')")
     @Operation(tags = {"定时任务管理"}, summary ="获取定时任务列表")
     @GetMapping("/list")
-    public TableDataInfo list(SysJob sysJob)
+    public TableDataInfo list(SysJobQuery query)
     {
         startPage();
+        SysJob sysJob = BeanConvertUtils.convert(query, SysJob.class);
         List<SysJob> list = jobService.selectJobList(sysJob);
-        return getDataTable(list);
+        List<SysJobVO> voList = BeanConvertUtils.convertList(list, SysJobVO.class);
+        return getDataTable(voList);
     }
 
     /**
@@ -77,7 +84,9 @@ public class SysJobController extends BaseController
     @GetMapping(value = "/{jobId}")
     public AjaxResult getInfo(@PathVariable("jobId") Long jobId)
     {
-        return success(jobService.selectJobById(jobId));
+        SysJob job = jobService.selectJobById(jobId);
+        SysJobVO vo = BeanConvertUtils.convert(job, SysJobVO.class);
+        return success(vo);
     }
 
     /**
@@ -87,8 +96,9 @@ public class SysJobController extends BaseController
     @Log(title = "定时任务", businessType = BusinessType.INSERT)
     @Operation(tags = {"定时任务管理"}, summary ="新增定时任务")
     @PostMapping
-    public AjaxResult add(@RequestBody SysJob job) throws SchedulerException, TaskException
+    public AjaxResult add(@Valid @RequestBody SysJobDTO dto) throws SchedulerException, TaskException
     {
+        SysJob job = BeanConvertUtils.convert(dto, SysJob.class);
         if (!CronUtils.isValid(job.getCronExpression()))
         {
             return error("新增任务'" + job.getJobName() + "'失败，Cron表达式不正确");
@@ -124,8 +134,9 @@ public class SysJobController extends BaseController
     @Log(title = "定时任务", businessType = BusinessType.UPDATE)
     @Operation(tags = {"定时任务管理"}, summary ="修改定时任务")
     @PutMapping
-    public AjaxResult edit(@RequestBody SysJob job) throws SchedulerException, TaskException
+    public AjaxResult edit(@Valid @RequestBody SysJobDTO dto) throws SchedulerException, TaskException
     {
+        SysJob job = BeanConvertUtils.convert(dto, SysJob.class);
         if (!CronUtils.isValid(job.getCronExpression()))
         {
             return error("修改任务'" + job.getJobName() + "'失败，Cron表达式不正确");

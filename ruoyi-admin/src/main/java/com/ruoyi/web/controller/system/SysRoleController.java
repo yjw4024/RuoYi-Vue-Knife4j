@@ -2,6 +2,7 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -23,10 +24,14 @@ import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.SysUserRole;
+import com.ruoyi.system.domain.dto.SysRoleDTO;
+import com.ruoyi.system.domain.query.SysRoleQuery;
+import com.ruoyi.system.domain.vo.SysRoleVO;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
@@ -59,10 +64,10 @@ public class SysRoleController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:role:list')")
     @Operation(summary = "获取角色列表")
     @GetMapping("/list")
-    public TableDataInfo list(SysRole role)
+    public TableDataInfo list(SysRoleQuery query)
     {
         startPage();
-        List<SysRole> list = roleService.selectRoleList(role);
+        List<SysRoleVO> list = roleService.selectRoleVOList(query);
         return getDataTable(list);
     }
 
@@ -86,7 +91,7 @@ public class SysRoleController extends BaseController
     public AjaxResult getInfo(@PathVariable Long roleId)
     {
         roleService.checkRoleDataScope(roleId);
-        return success(roleService.selectRoleById(roleId));
+        return success(roleService.selectRoleVOById(roleId));
     }
 
     /**
@@ -96,8 +101,9 @@ public class SysRoleController extends BaseController
     @Log(title = "角色管理", businessType = BusinessType.INSERT)
     @Operation(summary = "新增角色")
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysRole role)
+    public AjaxResult add(@Valid @RequestBody SysRoleDTO dto)
     {
+        SysRole role = BeanConvertUtils.convert(dto, SysRole.class);
         if (!roleService.checkRoleNameUnique(role))
         {
             return error("新增角色'" + role.getRoleName() + "'失败，角色名称已存在");
@@ -118,8 +124,9 @@ public class SysRoleController extends BaseController
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
     @Operation(summary = "修改保存角色")
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysRole role)
+    public AjaxResult edit(@Valid @RequestBody SysRoleDTO dto)
     {
+        SysRole role = BeanConvertUtils.convert(dto, SysRole.class);
         roleService.checkRoleAllowed(role);
         roleService.checkRoleDataScope(role.getRoleId());
         if (!roleService.checkRoleNameUnique(role))
@@ -131,7 +138,7 @@ public class SysRoleController extends BaseController
             return error("修改角色'" + role.getRoleName() + "'失败，角色权限已存在");
         }
         role.setUpdateBy(getUsername());
-        
+
         if (roleService.updateRole(role) > 0)
         {
             // 刷新所有持有该角色的在线用户权限

@@ -21,7 +21,11 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.system.domain.SysConfig;
+import com.ruoyi.system.domain.dto.SysConfigDTO;
+import com.ruoyi.system.domain.query.SysConfigQuery;
+import com.ruoyi.system.domain.vo.SysConfigVO;
 import com.ruoyi.system.service.ISysConfigService;
 
 /**
@@ -50,6 +54,18 @@ public class SysConfigController extends BaseController
         return getDataTable(list);
     }
 
+    @Operation(summary = "获取参数配置列表")
+    @PreAuthorize("@ss.hasPermi('system:config:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(SysConfigQuery query)
+    {
+        startPage();
+        SysConfig config = BeanConvertUtils.convert(query, SysConfig.class);
+        List<SysConfig> list = configService.selectConfigList(config);
+        List<SysConfigVO> voList = BeanConvertUtils.convertList(list, SysConfigVO.class);
+        return getDataTable(voList);
+    }
+
     @Operation(summary = "导出参数配置数据")
     @Log(title = "参数管理", businessType = BusinessType.EXPORT)
     @PreAuthorize("@ss.hasPermi('system:config:export')")
@@ -69,7 +85,9 @@ public class SysConfigController extends BaseController
     @GetMapping(value = "/{configId}")
     public AjaxResult getInfo(@PathVariable Long configId)
     {
-        return success(configService.selectConfigById(configId));
+        SysConfig config = configService.selectConfigById(configId);
+        SysConfigVO vo = BeanConvertUtils.convert(config, SysConfigVO.class);
+        return success().put("data", vo);
     }
 
     /**
@@ -99,6 +117,21 @@ public class SysConfigController extends BaseController
         return toAjax(configService.insertConfig(config));
     }
 
+    @Operation(summary = "新增参数配置")
+    @PreAuthorize("@ss.hasPermi('system:config:add')")
+    @Log(title = "参数管理", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody SysConfigDTO dto)
+    {
+        SysConfig config = BeanConvertUtils.convert(dto, SysConfig.class);
+        if (!configService.checkConfigKeyUnique(config))
+        {
+            return error("新增参数'" + config.getConfigName() + "'失败，参数键名已存在");
+        }
+        config.setCreateBy(getUsername());
+        return toAjax(configService.insertConfig(config));
+    }
+
     /**
      * 修改参数配置
      */
@@ -108,6 +141,21 @@ public class SysConfigController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysConfig config)
     {
+        if (!configService.checkConfigKeyUnique(config))
+        {
+            return error("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");
+        }
+        config.setUpdateBy(getUsername());
+        return toAjax(configService.updateConfig(config));
+    }
+
+    @Operation(summary = "修改参数配置")
+    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    @Log(title = "参数管理", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody SysConfigDTO dto)
+    {
+        SysConfig config = BeanConvertUtils.convert(dto, SysConfig.class);
         if (!configService.checkConfigKeyUnique(config))
         {
             return error("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");

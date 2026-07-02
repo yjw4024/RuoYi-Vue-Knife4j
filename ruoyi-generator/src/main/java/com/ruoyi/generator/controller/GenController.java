@@ -32,8 +32,12 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.sql.SqlUtil;
 import com.ruoyi.generator.config.GenConfig;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.generator.domain.GenTable;
 import com.ruoyi.generator.domain.GenTableColumn;
+import com.ruoyi.generator.domain.query.GenTableQuery;
+import com.ruoyi.generator.domain.vo.GenTableColumnVO;
+import com.ruoyi.generator.domain.vo.GenTableVO;
 import com.ruoyi.generator.service.IGenTableColumnService;
 import com.ruoyi.generator.service.IGenTableService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,11 +65,13 @@ public class GenController extends BaseController
     @PreAuthorize("@ss.hasPermi('tool:gen:list')")
     @Operation(tags = {"代码生成"}, summary ="获取代码生成列表")
     @GetMapping("/list")
-    public TableDataInfo genList(GenTable genTable)
+    public TableDataInfo genList(GenTableQuery query)
     {
         startPage();
+        GenTable genTable = BeanConvertUtils.convert(query, GenTable.class);
         List<GenTable> list = genTableService.selectGenTableList(genTable);
-        return getDataTable(list);
+        List<GenTableVO> voList = BeanConvertUtils.convertList(list, GenTableVO.class);
+        return getDataTable(voList);
     }
 
     /**
@@ -80,8 +86,8 @@ public class GenController extends BaseController
         List<GenTable> tables = genTableService.selectGenTableAll();
         List<GenTableColumn> list = genTableColumnService.selectGenTableColumnListByTableId(tableId);
         Map<String, Object> map = new HashMap<String, Object>();
-        map.put("info", table);
-        map.put("rows", list);
+        map.put("info", BeanConvertUtils.convert(table, GenTableVO.class));
+        map.put("rows", BeanConvertUtils.convertList(list, GenTableColumnVO.class));
         map.put("tables", tables);
         return success(map);
     }
@@ -109,8 +115,9 @@ public class GenController extends BaseController
     {
         TableDataInfo dataInfo = new TableDataInfo();
         List<GenTableColumn> list = genTableColumnService.selectGenTableColumnListByTableId(tableId);
-        dataInfo.setRows(list);
-        dataInfo.setTotal(list.size());
+        List<GenTableColumnVO> voList = BeanConvertUtils.convertList(list, GenTableColumnVO.class);
+        dataInfo.setRows(voList);
+        dataInfo.setTotal(voList.size());
         return dataInfo;
     }
 

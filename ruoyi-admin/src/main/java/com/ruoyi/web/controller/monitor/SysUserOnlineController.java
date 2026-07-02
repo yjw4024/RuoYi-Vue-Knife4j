@@ -21,8 +21,11 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.SysUserOnline;
+import com.ruoyi.system.domain.query.SysUserOnlineQuery;
+import com.ruoyi.system.domain.vo.SysUserOnlineVO;
 import com.ruoyi.system.service.ISysUserOnlineService;
 
 /**
@@ -44,8 +47,11 @@ public class SysUserOnlineController extends BaseController
     @PreAuthorize("@ss.hasPermi('monitor:online:list')")
     @Operation(summary = "获取在线用户列表")
     @GetMapping("/list")
-    public TableDataInfo list(String ipaddr, String userName)
+    public TableDataInfo list(SysUserOnlineQuery query)
     {
+        SysUserOnline online = BeanConvertUtils.convert(query, SysUserOnline.class);
+        String ipaddr = online.getIpaddr();
+        String userName = online.getUserName();
         Collection<String> keys = redisCache.keys(CacheConstants.LOGIN_TOKEN_KEY + "*");
         List<SysUserOnline> userOnlineList = new ArrayList<SysUserOnline>();
         for (String key : keys)
@@ -70,7 +76,8 @@ public class SysUserOnlineController extends BaseController
         }
         Collections.reverse(userOnlineList);
         userOnlineList.removeAll(Collections.singleton(null));
-        return getDataTable(userOnlineList);
+        List<SysUserOnlineVO> voList = BeanConvertUtils.convertList(userOnlineList, SysUserOnlineVO.class);
+        return getDataTable(voList);
     }
 
     /**

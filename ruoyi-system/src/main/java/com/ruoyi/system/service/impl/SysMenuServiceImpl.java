@@ -20,10 +20,14 @@ import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.domain.dto.SysMenuDTO;
+import com.ruoyi.system.domain.query.SysMenuQuery;
 import com.ruoyi.system.domain.vo.MetaVo;
 import com.ruoyi.system.domain.vo.RouterVo;
+import com.ruoyi.system.domain.vo.SysMenuVO;
 import com.ruoyi.system.mapper.SysMenuMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.mapper.SysRoleMenuMapper;
@@ -614,5 +618,58 @@ public class SysMenuServiceImpl implements ISysMenuService
     {
         return StringUtils.replaceEach(path, new String[] { Constants.HTTP, Constants.HTTPS, Constants.WWW, ".", ":" },
                 new String[] { "", "", "", "/", "/" });
+    }
+
+    /**
+     * 根据菜单ID查询信息（VO）
+     *
+     * @param menuId 菜单ID
+     * @return 菜单VO
+     */
+    @Override
+    public SysMenuVO selectMenuVOById(Long menuId)
+    {
+        SysMenu menu = selectMenuById(menuId);
+        return BeanConvertUtils.convert(menu, SysMenuVO.class);
+    }
+
+    /**
+     * 根据条件查询菜单列表（VO）
+     *
+     * @param query 菜单查询条件
+     * @return 菜单VO列表
+     */
+    @Override
+    public List<SysMenuVO> selectMenuVOList(SysMenuQuery query)
+    {
+        SysMenu menu = BeanConvertUtils.convert(query, SysMenu.class);
+        List<SysMenu> list = selectMenuList(menu, SecurityUtils.getUserId());
+        return BeanConvertUtils.convertList(list, SysMenuVO.class);
+    }
+
+    /**
+     * 新增菜单（DTO）
+     *
+     * @param dto 菜单DTO
+     * @return 结果
+     */
+    @Override
+    public int insertMenuByDTO(SysMenuDTO dto)
+    {
+        SysMenu menu = BeanConvertUtils.convert(dto, SysMenu.class);
+        return insertMenu(menu);
+    }
+
+    /**
+     * 修改菜单（DTO）
+     *
+     * @param dto 菜单DTO
+     * @return 结果
+     */
+    @Override
+    public int updateMenuByDTO(SysMenuDTO dto)
+    {
+        SysMenu menu = BeanConvertUtils.convert(dto, SysMenu.class);
+        return updateMenu(menu);
     }
 }

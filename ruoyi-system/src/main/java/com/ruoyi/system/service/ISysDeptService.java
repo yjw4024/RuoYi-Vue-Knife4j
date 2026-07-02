@@ -3,6 +3,9 @@ package com.ruoyi.system.service;
 import java.util.List;
 import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysDept;
+import com.ruoyi.system.domain.dto.SysDeptDTO;
+import com.ruoyi.system.domain.query.SysDeptQuery;
+import com.ruoyi.system.domain.vo.SysDeptVO;
 
 /**
  * 部门管理 服务层
@@ -129,4 +132,36 @@ public interface ISysDeptService
      * @return 结果
      */
     public int deleteDeptById(Long deptId);
+
+    /**
+     * 根据部门ID查询信息（VO）
+     *
+     * @param deptId 部门ID
+     * @return 部门VO
+     */
+    public SysDeptVO selectDeptVOById(Long deptId);
+
+    /**
+     * 根据条件查询部门列表（VO）
+     *
+     * @param query 部门查询条件
+     * @return 部门VO列表
+     */
+    public List<SysDeptVO> selectDeptVOList(SysDeptQuery query);
+
+    /**
+     * 新增部门（DTO）
+     *
+     * @param dto 部门DTO
+     * @return 结果
+     */
+    public int insertDeptByDTO(SysDeptDTO dto);
+
+    /**
+     * 修改部门（DTO）
+     *
+     * @param dto 部门DTO
+     * @return 结果
+     */
+    public int updateDeptByDTO(SysDeptDTO dto);
 }

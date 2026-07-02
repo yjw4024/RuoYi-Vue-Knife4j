@@ -21,7 +21,11 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.system.domain.SysPost;
+import com.ruoyi.system.domain.dto.SysPostDTO;
+import com.ruoyi.system.domain.query.SysPostQuery;
+import com.ruoyi.system.domain.vo.SysPostVO;
 import com.ruoyi.system.service.ISysPostService;
 
 /**
@@ -49,7 +53,19 @@ public class SysPostController extends BaseController
         List<SysPost> list = postService.selectPostList(post);
         return getDataTable(list);
     }
-    
+
+    @Operation(summary = "获取岗位列表")
+    @PreAuthorize("@ss.hasPermi('system:post:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(SysPostQuery query)
+    {
+        startPage();
+        SysPost post = BeanConvertUtils.convert(query, SysPost.class);
+        List<SysPost> list = postService.selectPostList(post);
+        List<SysPostVO> voList = BeanConvertUtils.convertList(list, SysPostVO.class);
+        return getDataTable(voList);
+    }
+
     @Operation(summary = "导出岗位数据")
     @Log(title = "岗位管理", businessType = BusinessType.EXPORT)
     @PreAuthorize("@ss.hasPermi('system:post:export')")
@@ -69,7 +85,9 @@ public class SysPostController extends BaseController
     @GetMapping(value = "/{postId}")
     public AjaxResult getInfo(@PathVariable Long postId)
     {
-        return success(postService.selectPostById(postId));
+        SysPost post = postService.selectPostById(postId);
+        SysPostVO vo = BeanConvertUtils.convert(post, SysPostVO.class);
+        return success().put("data", vo);
     }
 
     /**
@@ -93,6 +111,25 @@ public class SysPostController extends BaseController
         return toAjax(postService.insertPost(post));
     }
 
+    @Operation(summary = "新增岗位")
+    @PreAuthorize("@ss.hasPermi('system:post:add')")
+    @Log(title = "岗位管理", businessType = BusinessType.INSERT)
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody SysPostDTO dto)
+    {
+        SysPost post = BeanConvertUtils.convert(dto, SysPost.class);
+        if (!postService.checkPostNameUnique(post))
+        {
+            return error("新增岗位'" + post.getPostName() + "'失败，岗位名称已存在");
+        }
+        else if (!postService.checkPostCodeUnique(post))
+        {
+            return error("新增岗位'" + post.getPostName() + "'失败，岗位编码已存在");
+        }
+        post.setCreateBy(getUsername());
+        return toAjax(postService.insertPost(post));
+    }
+
     /**
      * 修改岗位
      */
@@ -102,6 +139,25 @@ public class SysPostController extends BaseController
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody SysPost post)
     {
+        if (!postService.checkPostNameUnique(post))
+        {
+            return error("修改岗位'" + post.getPostName() + "'失败，岗位名称已存在");
+        }
+        else if (!postService.checkPostCodeUnique(post))
+        {
+            return error("修改岗位'" + post.getPostName() + "'失败，岗位编码已存在");
+        }
+        post.setUpdateBy(getUsername());
+        return toAjax(postService.updatePost(post));
+    }
+
+    @Operation(summary = "修改岗位")
+    @PreAuthorize("@ss.hasPermi('system:post:edit')")
+    @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody SysPostDTO dto)
+    {
+        SysPost post = BeanConvertUtils.convert(dto, SysPost.class);
         if (!postService.checkPostNameUnique(post))
         {
             return error("修改岗位'" + post.getPostName() + "'失败，岗位名称已存在");

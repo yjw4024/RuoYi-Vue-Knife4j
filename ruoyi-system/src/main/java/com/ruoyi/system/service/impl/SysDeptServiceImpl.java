@@ -14,9 +14,13 @@ import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.BeanConvertUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
+import com.ruoyi.system.domain.dto.SysDeptDTO;
+import com.ruoyi.system.domain.query.SysDeptQuery;
+import com.ruoyi.system.domain.vo.SysDeptVO;
 import com.ruoyi.system.mapper.SysDeptMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.service.ISysDeptService;
@@ -360,5 +364,58 @@ public class SysDeptServiceImpl implements ISysDeptService
     private boolean hasChild(List<SysDept> list, SysDept t)
     {
         return getChildList(list, t).size() > 0;
+    }
+
+    /**
+     * 根据部门ID查询信息（VO）
+     *
+     * @param deptId 部门ID
+     * @return 部门VO
+     */
+    @Override
+    public SysDeptVO selectDeptVOById(Long deptId)
+    {
+        SysDept dept = selectDeptById(deptId);
+        return BeanConvertUtils.convert(dept, SysDeptVO.class);
+    }
+
+    /**
+     * 根据条件查询部门列表（VO）
+     *
+     * @param query 部门查询条件
+     * @return 部门VO列表
+     */
+    @Override
+    public List<SysDeptVO> selectDeptVOList(SysDeptQuery query)
+    {
+        SysDept dept = BeanConvertUtils.convert(query, SysDept.class);
+        List<SysDept> list = selectDeptList(dept);
+        return BeanConvertUtils.convertList(list, SysDeptVO.class);
+    }
+
+    /**
+     * 新增部门（DTO）
+     *
+     * @param dto 部门DTO
+     * @return 结果
+     */
+    @Override
+    public int insertDeptByDTO(SysDeptDTO dto)
+    {
+        SysDept dept = BeanConvertUtils.convert(dto, SysDept.class);
+        return insertDept(dept);
+    }
+
+    /**
+     * 修改部门（DTO）
+     *
+     * @param dto 部门DTO
+     * @return 结果
+     */
+    @Override
+    public int updateDeptByDTO(SysDeptDTO dto)
+    {
+        SysDept dept = BeanConvertUtils.convert(dto, SysDept.class);
+        return updateDept(dept);
     }
 }

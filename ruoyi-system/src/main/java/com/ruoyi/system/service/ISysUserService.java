@@ -3,6 +3,9 @@ package com.ruoyi.system.service;
 import java.util.Date;
 import java.util.List;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.system.domain.dto.SysUserDTO;
+import com.ruoyi.system.domain.query.SysUserQuery;
+import com.ruoyi.system.domain.vo.SysUserVO;
 
 /**
  * 用户 业务层
@@ -45,11 +48,43 @@ public interface ISysUserService
 
     /**
      * 通过用户ID查询用户
-     * 
+     *
      * @param userId 用户ID
      * @return 用户对象信息
      */
     public SysUser selectUserById(Long userId);
+
+    /**
+     * 通过用户ID查询用户（返回VO）
+     *
+     * @param userId 用户ID
+     * @return 用户VO对象信息
+     */
+    public SysUserVO selectUserVOById(Long userId);
+
+    /**
+     * 根据条件分页查询用户列表（返回VO）
+     *
+     * @param query 查询条件
+     * @return 用户VO集合信息
+     */
+    public List<SysUserVO> selectUserVOList(SysUserQuery query);
+
+    /**
+     * 新增用户信息（通过DTO）
+     *
+     * @param dto 用户DTO信息
+     * @return 结果
+     */
+    public int insertUserByDTO(SysUserDTO dto);
+
+    /**
+     * 修改用户信息（通过DTO）
+     *
+     * @param dto 用户DTO信息
+     * @return 结果
+     */
+    public int updateUserByDTO(SysUserDTO dto);
 
     /**
      * 根据用户ID查询用户所属角色组
