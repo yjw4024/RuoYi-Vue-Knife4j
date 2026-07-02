@@ -6,7 +6,7 @@ import java.nio.file.*;
 import java.util.*;
 
 /**
- * 分层架构代码生成器（参考douyi-tasks的PO/DTO/VO/Query + MapperCustom模式）
+ * 分层架构代码生成器（PO/DTO/VO/Query + Mapper + Service + Controller）
  *
  * 根据数据库表名，自动生成：
  *   - PO  (继承 BasePO)

@@ -47,16 +47,6 @@ public class SysConfigController extends BaseController
     @Operation(summary = "获取参数配置列表")
     @PreAuthorize("@ss.hasPermi('system:config:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysConfig config)
-    {
-        startPage();
-        List<SysConfig> list = configService.selectConfigList(config);
-        return getDataTable(list);
-    }
-
-    @Operation(summary = "获取参数配置列表")
-    @PreAuthorize("@ss.hasPermi('system:config:list')")
-    @GetMapping("/list")
     public TableDataInfo list(SysConfigQuery query)
     {
         startPage();
@@ -107,20 +97,6 @@ public class SysConfigController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:config:add')")
     @Log(title = "参数管理", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysConfig config)
-    {
-        if (!configService.checkConfigKeyUnique(config))
-        {
-            return error("新增参数'" + config.getConfigName() + "'失败，参数键名已存在");
-        }
-        config.setCreateBy(getUsername());
-        return toAjax(configService.insertConfig(config));
-    }
-
-    @Operation(summary = "新增参数配置")
-    @PreAuthorize("@ss.hasPermi('system:config:add')")
-    @Log(title = "参数管理", businessType = BusinessType.INSERT)
-    @PostMapping
     public AjaxResult add(@Validated @RequestBody SysConfigDTO dto)
     {
         SysConfig config = BeanConvertUtils.convert(dto, SysConfig.class);
@@ -135,20 +111,6 @@ public class SysConfigController extends BaseController
     /**
      * 修改参数配置
      */
-    @Operation(summary = "修改参数配置")
-    @PreAuthorize("@ss.hasPermi('system:config:edit')")
-    @Log(title = "参数管理", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysConfig config)
-    {
-        if (!configService.checkConfigKeyUnique(config))
-        {
-            return error("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");
-        }
-        config.setUpdateBy(getUsername());
-        return toAjax(configService.updateConfig(config));
-    }
-
     @Operation(summary = "修改参数配置")
     @PreAuthorize("@ss.hasPermi('system:config:edit')")
     @Log(title = "参数管理", businessType = BusinessType.UPDATE)

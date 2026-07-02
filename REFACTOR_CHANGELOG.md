@@ -1,6 +1,6 @@
 # 若依 RuoYi-Vue 分层架构重构文档
 
-> 基于 `refactor_prompt.md` 和 douyi-tasks 参考项目，对后端项目进行 PO/DTO/VO/Query 分层架构重构 + Knife4j 文档升级。
+> 对后端项目进行 PO/DTO/VO/Query 分层架构重构 + Knife4j 文档升级。
 
 ---
 

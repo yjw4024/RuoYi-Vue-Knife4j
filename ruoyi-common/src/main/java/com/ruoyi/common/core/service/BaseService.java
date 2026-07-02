@@ -3,8 +3,7 @@ package com.ruoyi.common.core.service;
 import java.util.List;
 
 /**
- * 通用 Service 接口（参考douyi-tasks的MapperCustom + Service模式）
- * 业务Service继承此接口即可获得通用CRUD方法
+ * 通用 Service 接口，业务Service继承此接口获得通用CRUD方法
  *
  * @param <T> PO类型
  * @author ruoyi

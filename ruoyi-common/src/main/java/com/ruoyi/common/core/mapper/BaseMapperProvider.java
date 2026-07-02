@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 通用 Mapper SQL 生成器（参考douyi-tasks的MapperCustom模式）
+ * 通用 Mapper SQL 生成器
  * 根据PO类自动生成基本的CRUD SQL，无需手写XML
  *
  * 使用方式（在XML mapper中引用）：

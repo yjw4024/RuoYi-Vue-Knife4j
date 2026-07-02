@@ -44,16 +44,6 @@ public class SysDictTypeController extends BaseController
     @Operation(summary = "获取字典类型列表")
     @PreAuthorize("@ss.hasPermi('system:dict:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysDictType dictType)
-    {
-        startPage();
-        List<SysDictType> list = dictTypeService.selectDictTypeList(dictType);
-        return getDataTable(list);
-    }
-
-    @Operation(summary = "获取字典类型列表")
-    @PreAuthorize("@ss.hasPermi('system:dict:list')")
-    @GetMapping("/list")
     public TableDataInfo list(SysDictTypeQuery query)
     {
         startPage();
@@ -94,20 +84,6 @@ public class SysDictTypeController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:dict:add')")
     @Log(title = "字典类型", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysDictType dict)
-    {
-        if (!dictTypeService.checkDictTypeUnique(dict))
-        {
-            return error("新增字典'" + dict.getDictName() + "'失败，字典类型已存在");
-        }
-        dict.setCreateBy(getUsername());
-        return toAjax(dictTypeService.insertDictType(dict));
-    }
-
-    @Operation(summary = "新增字典类型")
-    @PreAuthorize("@ss.hasPermi('system:dict:add')")
-    @Log(title = "字典类型", businessType = BusinessType.INSERT)
-    @PostMapping
     public AjaxResult add(@Validated @RequestBody SysDictTypeDTO dto)
     {
         SysDictType dict = BeanConvertUtils.convert(dto, SysDictType.class);
@@ -122,20 +98,6 @@ public class SysDictTypeController extends BaseController
     /**
      * 修改字典类型
      */
-    @Operation(summary = "修改字典类型")
-    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
-    @Log(title = "字典类型", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysDictType dict)
-    {
-        if (!dictTypeService.checkDictTypeUnique(dict))
-        {
-            return error("修改字典'" + dict.getDictName() + "'失败，字典类型已存在");
-        }
-        dict.setUpdateBy(getUsername());
-        return toAjax(dictTypeService.updateDictType(dict));
-    }
-
     @Operation(summary = "修改字典类型")
     @PreAuthorize("@ss.hasPermi('system:dict:edit')")
     @Log(title = "字典类型", businessType = BusinessType.UPDATE)

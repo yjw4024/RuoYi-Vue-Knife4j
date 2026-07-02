@@ -50,16 +50,6 @@ public class SysDictDataController extends BaseController
     @Operation(summary = "获取字典数据列表")
     @PreAuthorize("@ss.hasPermi('system:dict:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysDictData dictData)
-    {
-        startPage();
-        List<SysDictData> list = dictDataService.selectDictDataList(dictData);
-        return getDataTable(list);
-    }
-
-    @Operation(summary = "获取字典数据列表")
-    @PreAuthorize("@ss.hasPermi('system:dict:list')")
-    @GetMapping("/list")
     public TableDataInfo list(SysDictDataQuery query)
     {
         startPage();
@@ -115,16 +105,6 @@ public class SysDictDataController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:dict:add')")
     @Log(title = "字典数据", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysDictData dict)
-    {
-        dict.setCreateBy(getUsername());
-        return toAjax(dictDataService.insertDictData(dict));
-    }
-
-    @Operation(summary = "新增字典数据")
-    @PreAuthorize("@ss.hasPermi('system:dict:add')")
-    @Log(title = "字典数据", businessType = BusinessType.INSERT)
-    @PostMapping
     public AjaxResult add(@Validated @RequestBody SysDictDataDTO dto)
     {
         SysDictData dict = BeanConvertUtils.convert(dto, SysDictData.class);
@@ -135,16 +115,6 @@ public class SysDictDataController extends BaseController
     /**
      * 修改保存字典类型
      */
-    @Operation(summary = "修改字典数据")
-    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
-    @Log(title = "字典数据", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysDictData dict)
-    {
-        dict.setUpdateBy(getUsername());
-        return toAjax(dictDataService.updateDictData(dict));
-    }
-
     @Operation(summary = "修改字典数据")
     @PreAuthorize("@ss.hasPermi('system:dict:edit')")
     @Log(title = "字典数据", businessType = BusinessType.UPDATE)

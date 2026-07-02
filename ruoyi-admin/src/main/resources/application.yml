@@ -66,8 +66,8 @@ spring:
   # 服务模块
   devtools:
     restart:
-      # 热部署开关
-      enabled: true
+      # 热部署开关（RestartClassLoader会导致新类找不到，暂时关闭）
+      enabled: false
   data:
     # redis 配置
     redis:

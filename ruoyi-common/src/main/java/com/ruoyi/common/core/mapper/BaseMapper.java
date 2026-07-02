@@ -3,9 +3,8 @@ package com.ruoyi.common.core.mapper;
 import java.util.List;
 
 /**
- * 通用 Mapper 接口（参考douyi-tasks的MapperCustom）
- * 业务 Mapper 继承此接口即可获得通用 CRUD 方法
- * 复杂查询通过 XML mapper 或 @Select 注解实现
+ * 通用 Mapper 接口，业务 Mapper 继承此接口获得通用 CRUD 方法
+ * 复杂查询通过 XML mapper 实现
  *
  * @param <T> PO类型
  *

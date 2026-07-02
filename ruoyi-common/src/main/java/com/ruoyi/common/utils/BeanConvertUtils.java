@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
 
 /**
- * PO/DTO/VO 对象转换工具（参考douyi-tasks分层架构）
+ * PO/DTO/VO 对象转换工具
  *
  * @author ruoyi
  */

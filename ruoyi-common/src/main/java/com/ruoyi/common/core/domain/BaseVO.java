@@ -7,33 +7,29 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
- * PO基类，所有数据库实体PO继承此类
+ * VO基类，所有VO继承此类
  *
  * @author ruoyi
  */
 @Data
-@Schema(description = "PO基类")
-public class BasePO implements Serializable
+@Schema(description = "VO基类")
+public class BaseVO implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "主键ID")
     private Long id;
 
-    /** 创建者 */
     @Schema(description = "创建者")
     private String createBy;
 
-    /** 创建时间 */
     @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
-    /** 更新者 */
     @Schema(description = "更新者")
     private String updateBy;
 
-    /** 更新时间 */
     @Schema(description = "更新时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;

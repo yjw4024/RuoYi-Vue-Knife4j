@@ -5,8 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ruoyi.common.core.mapper.BaseMapper;
 
 /**
- * 通用 Service 实现（参考douyi-tasks模式）
- * 业务Service实现类继承此类，指定Mapper即可获得通用CRUD
+ * 通用 Service 实现，继承此类指定Mapper即可获得通用CRUD
  *
  * @param <M> Mapper类型
  * @param <T> PO类型

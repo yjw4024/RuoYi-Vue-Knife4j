@@ -45,20 +45,7 @@ public class SysNoticeController extends BaseController
     @Autowired
     private ISysNoticeReadService noticeReadService;
 
-    /**
-     * 获取通知公告列表
-     */
-    @Operation(summary = "获取通知公告列表")
-    @PreAuthorize("@ss.hasPermi('system:notice:list')")
-    @GetMapping("/list")
-    public TableDataInfo list(SysNotice notice)
-    {
-        startPage();
-        List<SysNotice> list = noticeService.selectNoticeList(notice);
-        return getDataTable(list);
-    }
-
-    @Operation(summary = "获取通知公告列表")
+@Operation(summary = "获取通知公告列表")
     @PreAuthorize("@ss.hasPermi('system:notice:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysNoticeQuery query)
@@ -82,18 +69,7 @@ public class SysNoticeController extends BaseController
         return success().put("data", vo);
     }
 
-    /**
-     * 新增通知公告
-     */
-    @Operation(summary = "新增通知公告")
-    @PreAuthorize("@ss.hasPermi('system:notice:add')")
-    @Log(title = "通知公告", businessType = BusinessType.INSERT)
-    @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysNotice notice)
-    {
-        notice.setCreateBy(getUsername());
-        return toAjax(noticeService.insertNotice(notice));
-    }
+    
 
     @Operation(summary = "新增通知公告")
     @PreAuthorize("@ss.hasPermi('system:notice:add')")
@@ -109,16 +85,6 @@ public class SysNoticeController extends BaseController
     /**
      * 修改通知公告
      */
-    @Operation(summary = "修改通知公告")
-    @PreAuthorize("@ss.hasPermi('system:notice:edit')")
-    @Log(title = "通知公告", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysNotice notice)
-    {
-        notice.setUpdateBy(getUsername());
-        return toAjax(noticeService.updateNotice(notice));
-    }
-
     @Operation(summary = "修改通知公告")
     @PreAuthorize("@ss.hasPermi('system:notice:edit')")
     @Log(title = "通知公告", businessType = BusinessType.UPDATE)

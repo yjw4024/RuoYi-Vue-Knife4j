@@ -41,20 +41,7 @@ public class SysPostController extends BaseController
     @Autowired
     private ISysPostService postService;
 
-    /**
-     * 获取岗位列表
-     */
-    @Operation(summary = "获取岗位列表")
-    @PreAuthorize("@ss.hasPermi('system:post:list')")
-    @GetMapping("/list")
-    public TableDataInfo list(SysPost post)
-    {
-        startPage();
-        List<SysPost> list = postService.selectPostList(post);
-        return getDataTable(list);
-    }
-
-    @Operation(summary = "获取岗位列表")
+@Operation(summary = "获取岗位列表")
     @PreAuthorize("@ss.hasPermi('system:post:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysPostQuery query)
@@ -90,26 +77,7 @@ public class SysPostController extends BaseController
         return success().put("data", vo);
     }
 
-    /**
-     * 新增岗位
-     */
-    @Operation(summary = "新增岗位")
-    @PreAuthorize("@ss.hasPermi('system:post:add')")
-    @Log(title = "岗位管理", businessType = BusinessType.INSERT)
-    @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysPost post)
-    {
-        if (!postService.checkPostNameUnique(post))
-        {
-            return error("新增岗位'" + post.getPostName() + "'失败，岗位名称已存在");
-        }
-        else if (!postService.checkPostCodeUnique(post))
-        {
-            return error("新增岗位'" + post.getPostName() + "'失败，岗位编码已存在");
-        }
-        post.setCreateBy(getUsername());
-        return toAjax(postService.insertPost(post));
-    }
+    
 
     @Operation(summary = "新增岗位")
     @PreAuthorize("@ss.hasPermi('system:post:add')")
@@ -133,24 +101,6 @@ public class SysPostController extends BaseController
     /**
      * 修改岗位
      */
-    @Operation(summary = "修改岗位")
-    @PreAuthorize("@ss.hasPermi('system:post:edit')")
-    @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
-    @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysPost post)
-    {
-        if (!postService.checkPostNameUnique(post))
-        {
-            return error("修改岗位'" + post.getPostName() + "'失败，岗位名称已存在");
-        }
-        else if (!postService.checkPostCodeUnique(post))
-        {
-            return error("修改岗位'" + post.getPostName() + "'失败，岗位编码已存在");
-        }
-        post.setUpdateBy(getUsername());
-        return toAjax(postService.updatePost(post));
-    }
-
     @Operation(summary = "修改岗位")
     @PreAuthorize("@ss.hasPermi('system:post:edit')")
     @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
