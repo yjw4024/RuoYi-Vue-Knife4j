@@ -1,4 +1,4 @@
-package com.ruoyi.common.core.domain;
+package com.ruoyi.common.core.po;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -8,19 +8,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
- * PO基类（varchar主键，参考 dc.base.BasePO）
+ * PO基类（自增Long主键，参考 dc.base.BaseIntPO）
  *
  * @author YiJiawei
  * @date 2026/7/4
  */
 @Data
-@Schema(description = "PO基类")
-public class BasePO implements Serializable
+@Schema(description = "PO基类（Long主键）")
+public class BaseIntPO implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "主键ID")
-    private String id;
+    private Long id;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "创建时间")

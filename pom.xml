@@ -180,6 +180,13 @@
                 <version>${ruoyi.version}</version>
             </dependency>
 
+            <!-- jiawei-hospital模块-->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-jiawei-hospital</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
             <!-- 通用工具-->
             <dependency>
                 <groupId>com.ruoyi</groupId>
@@ -196,6 +203,7 @@
         <module>ruoyi-system</module>
         <module>ruoyi-quartz</module>
         <module>ruoyi-generator</module>
+        <module>ruoyi-jiawei-hospital</module>
         <module>ruoyi-common</module>
     </modules>
     <packaging>pom</packaging>

@@ -4,240 +4,234 @@
 这是一个基于 RuoYi (Spring Boot + MyBatis) 的多模块后端项目。
 - Spring Boot 4.0.3 + Spring Framework 7.0.5 + JDK 17
 - 已升级 Knife4j 接口文档（springdoc-openapi + knife4j-openapi3-ui 4.0.0）
-- 正在进行架构升级，从 Entity 透传模式升级为 **DTO / VO / Query** 分层模式
-- 新增 BasePO / PageQuery / BaseMapper / BaseService 通用基类
-- 新增 CodeGenerator 代码生成器，一键生成全部分层代码
+- 通用基类体系：BasePO / BaseIntPO / BusinessPO / BusinessIntPO / BaseDTO / BaseIntDTO / PageQuery
+- BaseMapper<T,ID> + BaseMapperProvider 注解驱动自动 CRUD（无需手写基础 SQL）
+- 参考模块：ruoyi-jiawei-hospital（完整示例）
 
 ## 通用基类（ruoyi-common）
 
+### PO 基类层次
+
+```
+BasePO (varchar主键: id, gmtCreate, gmtModified)
+  └── BusinessPO (+ createUserId, createUserName, updateUserId, updateUserName, isDeleted, version, memo)
+
+BaseIntPO (Long主键: id, gmtCreate, gmtModified)
+  └── BusinessIntPO (+ 同上业务字段)
+```
+
+| 基类 | 位置 | 适用场景 |
+|------|------|----------|
+| `BasePO` | `domain/BasePO.java` | varchar主键表，只有创建/修改时间 |
+| `BaseIntPO` | `po/BaseIntPO.java` | 自增Long主键表，只有创建/修改时间 |
+| `BusinessPO` | `po/BusinessPO.java` | varchar主键 + 审计/逻辑删除/乐观锁 |
+| `BusinessIntPO` | `po/BusinessIntPO.java` | Long主键 + 审计/逻辑删除/乐观锁 |
+
+### DTO 基类
+
+| 基类 | 位置 | 适用场景 |
+|------|------|----------|
+| `BaseDTO` | `domain/BaseDTO.java` | varchar主键 (id, version, memo) |
+| `BaseIntDTO` | `domain/BaseIntDTO.java` | Long主键 (id, version, memo) |
+
+### Query 基类
+
+| 基类 | 位置 | 字段 |
+|------|------|------|
+| `PageQuery` | `domain/PageQuery.java` | pageNum, pageSize |
+
+### Mapper/Service 基类
+
 | 基类 | 位置 | 用途 |
 |------|------|------|
-| `BasePO` | `common/core/domain/BasePO.java` | PO 实体基类，提供 id/createBy/createTime/updateBy/updateTime/remark，使用 @Data |
-| `BaseDTO` | `common/core/domain/BaseDTO.java` | DTO 基类，提供 remark 等通用字段，使用 @Data |
-| `BaseVO` | `common/core/domain/BaseVO.java` | VO 基类，提供 id/createBy/createTime/updateBy/updateTime/remark，使用 @Data |
-| `PageQuery` | `common/core/domain/PageQuery.java` | 分页查询基类，提供 pageNum/pageSize/orderByColumn/isAsc/params，使用 @Data |
-| `BaseMapper<T>` | `common/core/mapper/BaseMapper.java` | 通用 Mapper 接口，提供 insert/updateById/deleteById/selectById/selectList 等 |
-| `BaseMapperProvider` | `common/core/mapper/BaseMapperProvider.java` | 通用 Mapper SQL 生成器，自动生成 CRUD SQL |
-| `BaseService<T>` | `common/core/service/BaseService.java` | 通用 Service 接口 |
-| `BaseServiceImpl<M,T>` | `common/core/service/BaseServiceImpl.java` | 通用 Service 实现（注入 Mapper 即可获得全部 CRUD） |
+| `BaseMapper<T,ID>` | `mapper/BaseMapper.java` | 注解驱动自动CRUD（@SelectProvider/@InsertProvider） |
+| `BaseMapperProvider` | `mapper/BaseMapperProvider.java` | 通用CRUD SQL生成器 |
+| `BaseService<T,ID>` | `service/BaseService.java` | 通用Service接口 |
+| `BaseServiceImpl<M,T,ID>` | `service/BaseServiceImpl.java` | 通用Service实现 |
 
 ### Mapper 继承链
 
 ```
-你的Mapper extends BaseMapper<T>
+你的Mapper extends BaseMapper<Xxx, ID>
     ↓
-BaseMapper<T> 提供通用 CRUD 方法声明
+BaseMapper 通过 @SelectProvider/@InsertProvider 注解自动生成 CRUD SQL
     ↓
-XML mapper 实现通用 CRUD（模板化SQL）
+基础CRUD无需手写SQL，也无需XML
     ↓
-复杂查询在 XML 中手写
+复杂查询才在XML中手写
 ```
-
-**关键**：继承 BaseMapper 后，insert/updateById/deleteById/selectById/selectList 等方法无需编写 SQL。只有在需要复杂查询时才在 XML 中手写。
 
 ### 分层继承链
 
 ```
-PO extends BasePO (@Data)       → 自动获得 id/createBy/createTime/等 + Getter/Setter
-DTO extends BaseDTO (@Data)     → 自动获得 remark + Getter/Setter
-VO extends BaseVO (@Data)       → 自动获得 id/createBy/createTime/等 + Getter/Setter
-Query extends PageQuery (@Data) → 自动获得 pageNum/pageSize/orderByColumn + Getter/Setter
+PO extends BusinessPO (@Data)        → 自动获得 id/createUserId/gmtCreate/version/isDeleted 等
+DTO extends BaseDTO (@Data)          → 自动获得 id/version/memo
+Query extends PageQuery (@Data)      → 自动获得 pageNum/pageSize
+Mapper extends BaseMapper<Xxx, ID>   → 自动获得 CRUD 方法
+Service extends BaseServiceImpl      → 注入Mapper即获得全部CRUD
 ```
 
-**新模块必须**：PO/DTO/VO/Query 继承对应基类 + 使用 `@Data` 注解（Lombok），精简代码。
+**新模块必须**：全部使用 `@Data`（Lombok），继承对应基类。
 
 ## 模块结构
 
 ```
-ruoyi-admin/       # Controller 层（24个控制器，6个Knife4j分组）
-ruoyi-common/      # 通用工具、基础Entity（BaseEntity, SysUser, SysRole等）
-ruoyi-framework/   # 安全/配置层（SecurityConfig, ResourcesConfig, SwaggerConfig）
-ruoyi-system/      # 系统业务模块（Service + Mapper + domain/dto/vo/query）
-ruoyi-quartz/      # 定时任务模块
-ruoyi-generator/   # 代码生成模块
+ruoyi-admin/             # Controller 层
+ruoyi-common/            # 通用工具 + 基类 + BaseEntity
+ruoyi-framework/         # 安全/配置层
+ruoyi-system/            # 系统业务模块（传统方式）
+ruoyi-quartz/            # 定时任务模块
+ruoyi-generator/         # 代码生成模块
+ruoyi-jiawei-hospital/   # 医院模块（新标准参考）
 ```
 
-## Directory Structure Rules（已实施部分）
-
-重构采用**增量式保守策略**：新增 DTO/VO/Query 类，保留原有 Entity 作为 PO 层不变（确保 MyBatis XML 映射兼容）。
+## 新模块标准结构（以 jiawei-hospital 为例）
 
 ```
-ruoyi-system/src/main/java/com/ruoyi/system/
-├── domain/
-│   ├── dto/         # 请求参数对象（含 @NotBlank/@Size 校验）
-│   │   ├── SysUserDTO.java
-│   │   ├── SysRoleDTO.java
-│   │   ├── SysMenuDTO.java
-│   │   ├── SysDeptDTO.java
-│   │   ├── SysDictTypeDTO.java, SysDictDataDTO.java
-│   │   ├── SysConfigDTO.java, SysNoticeDTO.java, SysPostDTO.java
-│   │   └── XxxDTO.java  ← 命名模式
-│   ├── vo/          # 响应视图对象（无 password 等敏感字段，含 @JsonFormat）
-│   │   ├── SysUserVO.java
-│   │   ├── SysRoleVO.java, SysMenuVO.java, SysDeptVO.java
-│   │   ├── SysDictTypeVO.java, SysDictDataVO.java
-│   │   ├── SysConfigVO.java, SysNoticeVO.java, SysPostVO.java
-│   │   ├── SysOperLogVO.java, SysLogininforVO.java
-│   │   ├── SysUserOnlineVO.java, SysCacheVO.java
-│   │   └── XxxVO.java  ← 命名模式
-│   └── query/       # 分页查询对象（含 beginTime/endTime/params Map）
-│       ├── SysUserQuery.java
-│       ├── SysRoleQuery.java, SysMenuQuery.java, SysDeptQuery.java
-│       ├── SysDictTypeQuery.java, SysDictDataQuery.java
-│       ├── SysConfigQuery.java, SysNoticeQuery.java, SysPostQuery.java
-│       ├── SysOperLogQuery.java, SysLogininforQuery.java
-│       ├── SysUserOnlineQuery.java
-│       └── XxxQuery.java  ← 命名模式
-├── service/
-│   ├── ISysUserService.java     ← 新增 selectXxxVOById / insertXxxByDTO 等方法
-│   └── impl/
-│       └── SysUserServiceImpl.java  ← 内部用 BeanConvertUtils 做转换
-└── mapper/         # 不变，继续操作 Entity(PO)
-
-ruoyi-quartz/src/main/java/com/ruoyi/quartz/domain/
-├── dto/  (SysJobDTO.java)
-├── vo/   (SysJobVO.java, SysJobLogVO.java)
-└── query/ (SysJobQuery.java, SysJobLogQuery.java)
-
-ruoyi-generator/src/main/java/com/ruoyi/generator/domain/
-├── vo/   (GenTableVO.java, GenTableColumnVO.java)
-└── query/ (GenTableQuery.java)
+ruoyi-jiawei-hospital/
+├── pom.xml
+└── src/main/
+    ├── java/com/ruoyi/hospital/
+    │   ├── controller/RyHospitalController.java
+    │   ├── service/IRyHospitalService.java
+    │   ├── service/impl/RyHospitalServiceImpl.java
+    │   ├── mapper/RyHospitalMapper.java
+    │   └── domain/
+    │       ├── po/RyHospital.java          ← 表名驼峰命名，extends BusinessPO
+    │       ├── dto/RyHospitalDTO.java      ← extends BaseDTO + @Data
+    │       ├── vo/RyHospitalVO.java        ← 独立VO（无基类）
+    │       └── query/RyHospitalQuery.java  ← extends PageQuery + @Data
+    └── resources/
+        └── mapper/RyHospitalMapper.xml     ← 只写自定义查询
 ```
 
-> **注意**: 现有 Entity（如 `SysUser.java`, `SysRole.java` 等）保持在 `ruoyi-common/.../entity/` 中不变，充当 PO 层。MyBatis XML mapper 无需修改。**未来**可以考虑重命名为 `XxxPO` 并移动到 `domain/po/`。
+### 命名规范
 
-## 分层职责
+- **PO类名**：表名驼峰（如 `ry_hospital` → `RyHospital`），不加 PO 后缀
+- **DTO类名**：实体名 + `DTO`（如 `RyHospitalDTO`）
+- **VO类名**：实体名 + `VO`（如 `RyHospitalVO`）
+- **Query类名**：实体名 + `Query`（如 `RyHospitalQuery`）
+- **Mapper类名**：实体名 + `Mapper`（如 `RyHospitalMapper`）
+- **Service类名**：`I` + 实体名 + `Service`（如 `IRyHospitalService`）
+- **Controller类名**：实体名 + `Controller`（如 `RyHospitalController`）
 
-| 分层 | 位置 | 职责 | 关键注解 |
-|------|------|------|----------|
-| **Controller** | ruoyi-admin | 接收请求、参数校验、调用 Service | `@Valid @RequestBody DTO`, `@PreAuthorize` |
-| **Service** | ruoyi-system | 业务逻辑 + DTO→PO + PO→VO 转换 | BeanConvertUtils |
-| **Mapper** | ruoyi-system | 操作 Entity(PO)，MyBatis XML 映射 | 不变 |
-| **DTO** | domain/dto | 新增/修改入参 | `@NotBlank`, `@Schema` |
-| **VO** | domain/vo | 响应数据（无密码等敏感字段） | `@Schema`, `@JsonFormat` |
-| **Query** | domain/query | 分页查询过滤条件 | `@Schema`, `params` Map |
-
-## 对象转换规范
-
-使用 `BeanConvertUtils`（位于 `ruoyi-common/src/main/java/com/ruoyi/common/utils/BeanConvertUtils.java`）：
-```java
-// 单个转换
-SysUserVO vo = BeanConvertUtils.convert(sysUser, SysUserVO.class);
-// 列表转换
-List<SysUserVO> voList = BeanConvertUtils.convertList(poList, SysUserVO.class);
-// DTO → PO
-SysUser user = BeanConvertUtils.convert(dto, SysUser.class);
-// Query → PO
-SysUser user = BeanConvertUtils.convert(query, SysUser.class);
-```
-
-## Controller 编码模板
+## Javadoc 规范
 
 ```java
-// 列表查询: Query 入参 → VO 列表返回
-@GetMapping("/list")
-public TableDataInfo list(XxxQuery query) {
-    startPage();
-    List<Xxx> list = service.selectList(BeanConvertUtils.convert(query, Xxx.class));
-    return getDataTable(BeanConvertUtils.convertList(list, XxxVO.class));
-}
-
-// 详情: ID 入参 → VO 返回
-@GetMapping("/{id}")
-public AjaxResult getInfo(@PathVariable Long id) {
-    return success(BeanConvertUtils.convert(service.selectById(id), XxxVO.class));
-}
-
-// 新增: @Valid DTO 入参 → DTO→PO → Service
-@PostMapping
-public AjaxResult add(@Valid @RequestBody XxxDTO dto) {
-    Xxx po = BeanConvertUtils.convert(dto, Xxx.class);
-    po.setCreateBy(getUsername());
-    return toAjax(service.insert(po));
-}
-
-// 修改: @Valid DTO 入参 → DTO→PO → Service
-@PutMapping
-public AjaxResult edit(@Valid @RequestBody XxxDTO dto) {
-    Xxx po = BeanConvertUtils.convert(dto, Xxx.class);
-    po.setUpdateBy(getUsername());
-    return toAjax(service.update(po));
-}
+/**
+ * 方法功能描述
+ *
+ * @param dto 参数说明
+ * @return 返回值类型
+ * @author YiJiawei
+ * @date 2026/7/4
+ **/
 ```
 
-## Service 层编码模板
-
-```java
-// 接口新增分层方法（不修改原有方法）
-SysUserVO selectUserVOById(Long userId);
-List<SysUserVO> selectUserVOList(SysUserQuery query);
-int insertUserByDTO(SysUserDTO dto);
-int updateUserByDTO(SysUserDTO dto);
-
-// 实现内部委托给原有方法 + BeanConvertUtils 转换
-@Override
-public SysUserVO selectUserVOById(Long userId) {
-    return BeanConvertUtils.convert(selectUserById(userId), SysUserVO.class);
-}
-```
+每个方法必须写 Javadoc，包含 `@param`、`@return`、`@author YiJiawei`、`@date`。
 
 ## Knife4j 文档规范
 
 - 每个 Controller 必须有 `@Tag(name = "中文名称")`
 - 每个方法必须有 `@Operation(summary = "中文说明")`
-- 请求/响应对象必须有 `@Schema(description = "中文说明")`
-- access token via `http://localhost:8080/doc.html`
+- 所有实体/基类字段必须有 `@Schema(description = "中文说明")`
 
 ### SwaggerConfig 关键配置
 
-- Security: HTTP Bearer (`scheme("bearer")` 小写)
-- 安全方案名使用 `bearerAuth`（不要用 `Authorization` 避免 Knife4j 冲突）
-- 6模块 `GroupedOpenApi` bean 分组切换
+- Security: HTTP Bearer (`scheme("bearer")` 小写)，安全方案名 `bearerAuth`
+- `GroupedOpenApi` bean 分组切换（7组：系统/监控/通用/定时任务/代码生成/测试/医院）
 - `GlobalOpenApiCustomizer` 处理子模块中文 Tag + 操作级 SecurityRequirement
 
-## RuoYi 特性兼容
+## 编码模板
 
-- Controller 继承 `BaseController` → 获得 `startPage()`, `getDataTable()`, `success()`, `error()` 等方法
-- Entity(PO) 继承 `BaseEntity` → 获得 `createBy`, `createTime`, `updateBy`, `updateTime`, `remark`, `params`
-- 导出 Excel: `@Excel` 注解保留在 Entity(PO) 上，不影响 VO
-- 权限校验: `@PreAuthorize("@ss.hasPermi('system:user:list')")` 保持不变
-- 操作日志: `@Log(title = "用户管理", businessType = BusinessType.xxx)` 保持不变
-
-## 工作流（新增模块/重构模块）
-
-### 方式一：代码生成器（推荐）
-
-使用 `CodeGenerator.java` 一键生成全部文件：
+### Controller
 
 ```java
-// 修改 main 方法中的参数后运行
-CodeGenerator.generateAll(
-    "SysNotice",       // 类名（大写驼峰）
-    "sys_notice",      // 数据库表名
-    "通知公告",         // 功能描述
-    "noticeId",        // 主键字段（驼峰）
-    "notice_id"        // 主键列名（下划线）
-);
+@Tag(name = "医院管理")
+@RestController
+@RequestMapping("/hospital")
+public class RyHospitalController extends BaseController {
+    @Autowired
+    private IRyHospitalService hospitalService;
+
+    @GetMapping("/list")
+    public TableDataInfo list(RyHospitalQuery query) {
+        startPage();
+        RyHospital search = BeanConvertUtils.convert(query, RyHospital.class);
+        return getDataTable(BeanConvertUtils.convertList(hospitalService.selectList(search), RyHospitalVO.class));
+    }
+
+    @GetMapping("/{id}")
+    public AjaxResult getInfo(@PathVariable String id) {
+        return success(BeanConvertUtils.convert(hospitalService.selectById(id), RyHospitalVO.class));
+    }
+
+    @PostMapping
+    public AjaxResult add(@Valid @RequestBody RyHospitalDTO dto) {
+        RyHospital po = BeanConvertUtils.convert(dto, RyHospital.class);
+        po.setId(UUID.randomUUID().toString().replaceAll("-", ""));
+        return toAjax(hospitalService.insert(po));
+    }
+
+    @PutMapping
+    public AjaxResult edit(@Valid @RequestBody RyHospitalDTO dto) {
+        return toAjax(hospitalService.updateById(BeanConvertUtils.convert(dto, RyHospital.class)));
+    }
+
+    @DeleteMapping("/{id}")
+    public AjaxResult remove(@PathVariable String id) {
+        return toAjax(hospitalService.deleteById(id));
+    }
+}
 ```
 
-自动生成 8 个文件：
-- `domain/po/XxxPO.java` — 继承 BasePO
-- `domain/dto/XxxDTO.java` — 含 @NotBlank 校验
-- `domain/vo/XxxVO.java` — 无敏感字段
-- `domain/query/XxxQuery.java` — 继承 PageQuery
-- `mapper/XxxMapper.java` — 继承 BaseMapper<XxxPO>
-- `mapper/XxxMapper.xml` — 通用 CRUD SQL 模板
-- `service/IXxxService.java` + `impl/XxxServiceImpl.java` — 继承 BaseServiceImpl
-- `controller/XxxController.java` — DTO/Query 入参 + VO 返回
+### Service
 
-### 方式二：手动创建
+```java
+// 接口
+public interface IRyHospitalService extends BaseService<RyHospital, String> { }
 
-1. 读取现有 Entity 类，确认字段
-2. 在 `domain/dto/` 创建 DTO（只包含 add/update 需要的字段 + `@NotBlank`）
-3. 在 `domain/vo/` 创建 VO（排除 password 等敏感字段，含 `@JsonFormat`）
-4. 在 `domain/query/` 创建 Query（继承 PageQuery + 查询过滤字段）
-5. Mapper 继承 `BaseMapper<XxxPO>`，XML 使用通用 CRUD 模板
-6. Service 继承 `BaseServiceImpl<XxxMapper, XxxPO>`，无需手写 CRUD
-7. Controller 方法签名改为 DTO/Query 入参、VO 返回
-8. 编译验证：`mvn compile -DskipTests`
-9. **不要删除**原有 Entity 和 Service 方法（向后兼容）
+// 实现（继承BaseServiceImpl自动获得全部CRUD，无需写任何代码）
+@Service
+public class RyHospitalServiceImpl extends BaseServiceImpl<RyHospitalMapper, RyHospital, String>
+        implements IRyHospitalService { }
+```
+
+### Mapper
+
+```java
+@Mapper
+public interface RyHospitalMapper extends BaseMapper<RyHospital, String> {
+    // 基础CRUD由BaseMapper注解自动生成，无需声明
+    // 复杂查询在此声明，XML中实现
+    List<RyHospital> selectHospitalList(RyHospitalQuery query);
+}
+```
+
+### Mapper XML（只写自定义查询）
+
+```xml
+<mapper namespace="com.ruoyi.hospital.mapper.RyHospitalMapper">
+    <!-- 基础CRUD由BaseMapperProvider自动生成，无需在此定义 -->
+
+    <select id="selectHospitalList" resultMap="BaseResultMap">
+        SELECT * FROM ry_hospital WHERE is_deleted = 0
+        <if test="hospitalName != null">AND hospital_name LIKE CONCAT('%', #{hospitalName}, '%')</if>
+        ORDER BY gmt_create DESC
+    </select>
+</mapper>
+```
+
+## 工作流（新增模块）
+
+1. 数据库中建表
+2. 创建 Maven 模块 + pom.xml（依赖 ruoyi-common + lombok）
+3. 创建 PO 继承 `BusinessPO`（varchar主键）或 `BusinessIntPO`（Long主键）
+4. 创建 DTO 继承 `BaseDTO` 或 `BaseIntDTO`
+5. 创建 Query 继承 `PageQuery`
+6. 创建 VO（独立）
+7. 创建 Mapper 继承 `BaseMapper<Xxx, ID>`，XML 只写自定义查询
+8. 创建 Service 继承 `BaseServiceImpl`
+9. 创建 Controller 继承 `BaseController`
+10. 注册到根 pom、ruoyi-admin/pom、SwaggerConfig、SecurityConfig
+11. 编译验证：`mvn compile -DskipTests`

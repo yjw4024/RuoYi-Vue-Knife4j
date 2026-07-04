@@ -60,6 +60,12 @@
             <artifactId>ruoyi-generator</artifactId>
         </dependency>
 
+        <!-- jiawei-hospital模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-jiawei-hospital</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

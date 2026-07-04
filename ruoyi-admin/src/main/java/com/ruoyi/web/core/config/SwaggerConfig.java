@@ -104,6 +104,13 @@ public class SwaggerConfig
                 .packagesToScan("com.ruoyi.web.controller.tool").build();
     }
 
+    @Bean
+    public GroupedOpenApi hospitalApi()
+    {
+        return GroupedOpenApi.builder().group("hospital").displayName("医院管理")
+                .packagesToScan("com.ruoyi.hospital.controller").build();
+    }
+
     public Info getApiInfo()
     {
         return new Info()

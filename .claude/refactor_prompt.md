@@ -1,81 +1,137 @@
 # Role: Java 高级架构师 & 若依(RuoYi) 框架专家
 
 ## Context
-我正在开发一个基于 RuoYi (Spring Boot + MyBatis) 的项目。目前项目的代码结构比较扁平（Entity 直接透传），我现在希望引入更严谨的分层架构，将对象进行拆分（PO/DTO/VO/Query）。
+基于 RuoYi (Spring Boot + MyBatis) 的多模块后端项目，已建立 PO/DTO/VO/Query 分层架构 + 通用基类体系。
 
-## Goal
-请帮我重构 `[你的业务模块名称]` 模块的代码，将其调整为标准的 PO/DTO/VO/Query 分层结构。
+## G基类体系
+
+```
+PO 层次:
+  BasePO (varchar主键: id, gmtCreate, gmtModified)
+    └── BusinessPO (+ createUserId, createUserName, updateUserId, updateUserName, isDeleted, version, memo)
+  BaseIntPO (Long主键: id, gmtCreate, gmtModified)
+    └── BusinessIntPO (+ 同上)
+
+DTO 基类:
+  BaseDTO (varchar主键: id, version, memo)
+  BaseIntDTO (Long主键: id, version, memo)
+
+Query/Service/Mapper:
+  PageQuery (pageNum, pageSize)
+  BaseMapper<T,ID> (注解驱动自动CRUD)
+  BaseService<T,ID> / BaseServiceImpl<M,T,ID>
+```
+
+## 命名规范
+
+| 层 | 命名 | 示例（表 ry_hospital） |
+|-----|------|------|
+| **PO** | 表名驼峰 | `RyHospital.java` |
+| **DTO** | 实体名 + DTO | `RyHospitalDTO.java` |
+| **VO** | 实体名 + VO | `RyHospitalVO.java` |
+| **Query** | 实体名 + Query | `RyHospitalQuery.java` |
+| **Mapper** | 实体名 + Mapper | `RyHospitalMapper.java` |
+| **Service** | I + 实体名 + Service | `IRyHospitalService.java` |
+| **ServiceImpl** | 实体名 + ServiceImpl | `RyHospitalServiceImpl.java` |
+| **Controller** | 实体名 + Controller | `RyHospitalController.java` |
 
 ## Target Structure (目标目录结构)
-请严格按照以下包路径组织代码：
 
+```
 com.ruoyi.[module_name]
-├── controller      // 控制层：接收 DTO/Query，返回 VO/R
-├── service         // 业务层：处理 DTO -> PO 转换，调用 Mapper
+├── controller      // 控制层：DTO/Query入参，VO/R返回
+├── service         // 业务层：继承BaseServiceImpl
 │   └── impl
-├── mapper          // 持久层：操作 PO
-├── domain          // 【核心变动区】
-│   ├── po          // [PO] 数据库实体类 (对应表结构，保留 @TableName/@TableId 等注解)
-│   ├── dto         // [DTO] 请求参数对象 (用于新增/修改，包含 @Valid 校验)
-│   ├── vo          // [VO] 响应视图对象 (返回给前端，隐藏敏感字段)
-│   └── query       // [Query] 分页查询对象 (继承 BaseQuery 或包含 pageNum/pageSize)
-└── convert         // (可选) 对象转换工具类 (如使用 MapStruct 或手动 BeanUtils)
+├── mapper          // 持久层：继承BaseMapper，XML只写自定义查询
+├── domain
+│   ├── po          // PO：表名驼峰，继承BusinessPO/BusinessIntPO
+│   ├── dto         // DTO：继承BaseDTO/BaseIntDTO + @Valid
+│   ├── vo          // VO：独立类，无基类
+│   └── query       // Query：继承PageQuery
+└── (resources/mapper/XxxMapper.xml)  // 只写自定义查询SQL
+```
 
 ## Execution Steps (执行步骤)
 
-### Step 1: 分析现有代码
-阅读我提供的 `[原 Entity 类名].java`、`[原 Controller].java` 和 `[原 Service].java`。
+### Step 1: 分析表结构
+根据建表 DDL 确定主键类型和字段，选择对应基类：
+- varchar主键 + 审计字段 → `extends BusinessPO`
+- Long主键 + 审计字段 → `extends BusinessIntPO`
 
-### Step 2: 创建 PO (Persistence Object)
-- 创建 `[ClassName]PO.java` 在 `domain/po` 包下。
-- **必须**继承 `BasePO`（获得 id/createBy/createTime/updateBy/updateTime/remark 等公共字段）。
-- **必须**使用 Lombok `@Data` 注解，无需手写 Getter/Setter。
-- **注意：** 保留所有 MyBatis 注解（如 `@TableName`, `@TableId`, `@TableField`）。
+### Step 2: 创建 PO
+- 类名 = 表名驼峰（如 `ry_hospital` → `RyHospital`）
+- **必须**继承 `BusinessPO` 或 `BusinessIntPO`
+- **必须**使用 `@Data` + `@EqualsAndHashCode(callSuper = true)`
+- 只定义表特有的业务字段，公共字段由基类提供
+- 每个字段加 `@Schema(description = "中文说明")`
 
-### Step 3: 创建 DTO (Data Transfer Object)
-- 创建 `[ClassName]DTO.java` 在 `domain/dto` 包下。
-- **必须**继承 `BaseDTO`。
-- **必须**使用 Lombok `@Data` + `@EqualsAndHashCode(callSuper = true)`。
-- 添加参数校验注解（如 `@NotBlank`, `@NotNull`）。
-- 如果是新增/修改接口，请使用此对象作为 Controller 入参。
+### Step 3: 创建 DTO
+- **必须**继承 `BaseDTO`（varchar主键）或 `BaseIntDTO`（Long主键）
+- **必须**使用 `@Data` + `@EqualsAndHashCode(callSuper = true)`
+- 添加 `@NotBlank`/`@Size` 校验注解
+- 仅包含新增/修改需要的字段
 
-### Step 4: 创建 VO (View Object)
-- 创建 `[ClassName]VO.java` 在 `domain/vo` 包下。
-- **必须**继承 `BaseVO`（获得 id/createBy/createTime/updateBy/updateTime/remark）。
-- **必须**使用 Lombok `@Data` + `@EqualsAndHashCode(callSuper = true)`。
-- 仅包含前端需要展示的字段（**严禁**包含 password, salt 等敏感字段）。
-- 添加 Swagger/Knife4j 注解（`@Schema`）以便生成文档。
+### Step 4: 创建 VO
+- **独立类**，使用 `@Data`
+- 所有字段加 `@Schema`，Date 字段加 `@JsonFormat`
+- 仅包含前端展示字段
 
-### Step 5: 创建 Query (查询对象)
-- 创建 `[ClassName]Query.java` 在 `domain/query` 包下。
-- **必须**继承 `PageQuery`（获得 pageNum/pageSize/orderByColumn/isAsc/params）。
-- **必须**使用 Lombok `@Data`。
-- 包含列表查询所需的过滤条件字段。
+### Step 5: 创建 Query
+- **必须**继承 `PageQuery`
+- **必须**使用 `@Data`
+- 包含查询过滤条件字段
 
-### Step 6: 配置 Mapper 层
-- 创建 `[ClassName]Mapper.java`，**继承 `BaseMapper<XxxPO>`**。
-- 继承后自动获得 insert/updateById/deleteById/selectById/selectList 等 CRUD 方法。
-- 创建 `mapper/XxxMapper.xml`，使用通用 CRUD SQL 模板。
-- **只有复杂查询才需要手写 SQL**。
+### Step 6: 创建 Mapper
+- **必须**继承 `BaseMapper<Xxx, ID类型>`
+- 基础 CRUD 由 BaseMapper 注解自动生成，无需声明
+- 只声明自定义查询方法
+- XML 文件只写自定义查询 SQL，基础 CRUD 不写
 
-### Step 7: 配置 Service 层
-- 创建 Service 接口继承 `BaseService<XxxPO>`。
-- 创建 ServiceImpl 继承 `BaseServiceImpl<XxxMapper, XxxPO>` 并实现接口。
-- 继承后自动获得全部 CRUD 方法，无需重复编写。
-- 自定义业务方法时，用 `BeanConvertUtils` 做 PO↔DTO↔VO 转换。
+### Step 7: 创建 Service
+- 接口继承 `BaseService<Xxx, ID类型>`
+- 实现类继承 `BaseServiceImpl<XxxMapper, Xxx, ID类型>` 并实现接口
+- 全部 CRUD 自动获得，无需编写
 
-### Step 8: 重构 Controller 层
-- 修改接口方法签名，DTO/Query 入参，VO 返回。
-- 添加 `@Validated` 注解以开启校验。
+### Step 8: 创建 Controller
+- 继承 `BaseController`（获得 startPage/success/error/getDataTable）
+- list 方法：Query 入参 → `startPage()` → selectList → convertList → VO 返回
+- getInfo：`selectById(id)` → convert → VO 返回
+- add：DTO → convert → PO → `insert(po)`
+- edit：DTO → convert → PO → `updateById(po)`
+- remove：`deleteById(id)`
+
+### Step 9: 注册模块
+- 根 pom.xml：module + dependencyManagement
+- ruoyi-admin/pom.xml：dependency
+- SwaggerConfig：GroupedOpenApi
+- SecurityConfig：白名单
+
+## Javadoc 规范
+
+每个方法必须写：
+```java
+/**
+ * 方法功能描述
+ *
+ * @param dto 参数说明
+ * @return com.ruoyi.xxx.XxxVO
+ * @author YiJiawei
+ * @date 2026/7/4
+ **/
+```
 
 ## Constraints (约束)
-1. **新模块**必须：PO/DTO/VO/Query 继承对应基类 + 使用 `@Data`。
-2. **不要删除**原有的业务逻辑代码，只调整对象引用。
-3. **保持注释**，特别是业务逻辑复杂的行。
-4. 如果原代码中有特殊的 MyBatis XML 映射，请提示我是否需要修改 XML 中的 `resultType` 或 `parameterType`。
-5. 输出代码时，请注明文件路径。
-6. 使用 `BeanConvertUtils.convert()` / `convertList()` 做对象转换。
-7. Mapper 继承 `BaseMapper<T>` 后，基础 CRUD 无需手写 SQL。
+
+1. **所有类**使用 Lombok `@Data`，继承基类
+2. **PO类名**用表名驼峰，不加PO后缀
+3. **Mapper XML** 只写自定义查询，基础 CRUD 由注解自动生成
+4. **对象转换**使用 `BeanConvertUtils.convert()` / `convertList()`
+5. **禁止**在 VO 中包含 password/salt 等敏感字段
+6. 所有方法写 Javadoc（@param @return @author @date）
+
+## 参考模块
+
+`ruoyi-jiawei-hospital` — 完整新模块标准实现，可作为模板复制。
 
 ---
 **现在，请等待我发送具体的代码文件，收到后请立即开始重构。**
